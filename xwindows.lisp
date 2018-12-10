@@ -11,7 +11,7 @@
 	   #:*visual32*
 	   #:*colormap32*
 	   #:*gcontext32*))
-(in-package :windows)
+(in-package :xwindows)
 
 (defparameter *display* (open-default-display))
 (defparameter *default-screen* (display-default-screen *display*))
