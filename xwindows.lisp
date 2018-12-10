@@ -27,7 +27,7 @@
 (defparameter *y* 0)
 (defparameter *depth* (drawable-depth *root-window*))
 (defparameter *default-class* :input-output) ; :input-only allows cursor, dnpm, event-mask, gravity, override
-(defparameter *visual* (xlib:window-visual windows:*root-window*) )
+(defparameter *visual* (xlib:window-visual *root-window*) )
 (defparameter *background* (screen-black-pixel *default-screen*))
 (defparameter *foreground* (screen-white-pixel *default-screen* ))
 (defparameter *backing-pixel* 0)
@@ -97,6 +97,6 @@
 		      :depth depth :visual visual))
 
 (defun get-32bpp-format ()
-  (dolist (format (xlib:find-matching-picture-formats windows:*display* :depth 32 :blue 8 :alpha 8))
+  (dolist (format (xlib:find-matching-picture-formats *display* :depth 32 :blue 8 :alpha 8))
     (when (equalp (picture-format-alpha-byte format) '(8 . 24))
       (return format))))
