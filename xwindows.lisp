@@ -6,6 +6,8 @@
 	   #:*display*
 	   #:*root-window*
 	   #:*default-screen*
+	   #:*foreground*
+	   #:*background*
 	   #:*gcontext*
 	   #:*pixmap32*
 	   #:*visual32*
@@ -13,6 +15,7 @@
 	   #:*gcontext32*))
 (in-package :xwindows)
 
+;;;; Display defaults
 (defparameter *display* (open-default-display))
 (defparameter *default-screen* (display-default-screen *display*))
 (defparameter *screen-width* (xlib:screen-width *default-screen*))
@@ -20,14 +23,17 @@
 (defparameter *root-window* (xlib:screen-root *default-screen*))
 (defparameter *default-colourmap* (car (installed-colormaps *root-window*)))
 (defparameter *window-list* (xlib:query-tree *root-window*))
+(defparameter *visual* (xlib:window-visual *root-window*))
+
+;;;; Window defaults
 (defparameter *default-height* 256)
 (defparameter *default-width* 256)
-(defparameter *default-parent *root-window*)
+(defparameter *default-parent* *root-window*)
 (defparameter *x* 0)
 (defparameter *y* 0)
-(defparameter *depth* (drawable-depth *root-window*))
+(defparameter *depth* (xlib:drawable-depth *root-window*))
 (defparameter *default-class* :input-output) ; :input-only allows cursor, dnpm, event-mask, gravity, override
-(defparameter *visual* (xlib:window-visual *root-window*) )
+
 (defparameter *background* (screen-black-pixel *default-screen*))
 (defparameter *foreground* (screen-white-pixel *default-screen* ))
 (defparameter *backing-pixel* 0)
@@ -42,6 +48,7 @@
 (defparameter *gravity* :center)
 (defparameter *override-redirect* :on)
 (defparameter *save-under* :on)
+
 (defparameter *gcontext* (create-gcontext :drawable *root-window*
 					  :foreground *foreground*
 					  :background *background*
@@ -63,7 +70,7 @@
 ;;this may not be the right thing, but for convenience of development
 (setf (display-after-function *display*) #'display-force-output)
 
-(defun get-window (&key (parent *root-window*)
+(defun get-window (&key (parent *default-parent*)
 		     (x *x*) (y *y*)
 		     (width *default-width*)
 		     (height *default-height*)
