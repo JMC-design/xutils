@@ -16,26 +16,45 @@
 (in-package :xwindows)
 
 ;;;; Display defaults
-(defparameter *display* (open-default-display))
-(defparameter *default-screen* (display-default-screen *display*))
-(defparameter *screen-width* (xlib:screen-width *default-screen*))
-(defparameter *screen-height* (xlib:screen-height *default-screen*))
-(defparameter *root-window* (xlib:screen-root *default-screen*))
-(defparameter *default-colourmap* (car (installed-colormaps *root-window*)))
-(defparameter *window-list* (xlib:query-tree *root-window*))
-(defparameter *visual* (xlib:window-visual *root-window*))
+
+(defparameter *display* nil) ;#.(open-default-display)
+(defparameter *default-screen* nil) ;#.(display-default-screen *display*)
+(defparameter *screen-width* nil) ;#.(xlib:screen-width *default-screen*)
+(defparameter *screen-height*  nil) ;#.(xlib:screen-height *default-screen*)
+(defparameter *root-window* nil) ;#.(xlib:screen-root *default-screen*)
+(defparameter *default-colourmap* nil) ;#.(car (installed-colormaps *root-window*))
+(defparameter *window-list* nil) ;#.(xlib:query-tree *root-window*)
+(defparameter *visual* nil) ;#.(xlib:window-visual *root-window*)
+(defparameter *background* nil) ;#.(screen-black-pixel *default-screen*)
+(defparameter *foreground* nil) ;#.(screen-white-pixel *default-screen* )
+
+
+;;;; Set Display defaults
+(defun init-default-display ()
+  (setf *display* (open-default-display)
+	*default-screen* (display-default-screen *display*)
+	*screen-width* (xlib:screen-width *default-screen*)
+	*screen-height* (xlib:screen-height *default-screen*)
+	*root-window* (xlib:screen-root *default-screen*)
+	*default-colourmap* (car (installed-colormaps *root-window*))
+	*window-list* (xlib:query-tree *root-window*)
+	*visual* (xlib:window-visual *root-window*)
+	*default-parent* *root-window*
+	*gcontext* (get-gcontext)
+	*pixmap32* (xlib:create-pixmap :width 1 :height 1 :depth 32 :drawable *root-window*)
+	*visual32* (get-depth32)
+	*colormap32* (create-colormap *visual32* *root-window*)
+	*gcontext32* (get-gcontext *pixmap32*))
+  (values))
 
 ;;;; Window defaults
 (defparameter *default-height* 256)
 (defparameter *default-width* 256)
-(defparameter *default-parent* *root-window*)
+(defparameter *default-parent* nil);*root-window*
 (defparameter *x* 0)
 (defparameter *y* 0)
-(defparameter *depth* (xlib:drawable-depth *root-window*))
+(defparameter *depth* 24 ) ;#.(xlib:drawable-depth *root-window*)
 (defparameter *default-class* :input-output) ; :input-only allows cursor, dnpm, event-mask, gravity, override
-
-(defparameter *background* (screen-black-pixel *default-screen*))
-(defparameter *foreground* (screen-white-pixel *default-screen* ))
 (defparameter *backing-pixel* 0)
 (defparameter *border-width* 0)
 ;(defparameter *backing-planes*)
@@ -49,26 +68,27 @@
 (defparameter *override-redirect* :on)
 (defparameter *save-under* :on)
 
-(defparameter *gcontext* (create-gcontext :drawable *root-window*
-					  :foreground *foreground*
-					  :background *background*
-					  :cache-p t
-					  :subwindow-mode :include-inferiors))
+(defparameter *gcontext* nil)
+
+(defun get-gcontext (&optional (window *root-window*))
+  "GC is usable on windows with same depth and screen-root as given WINDOW."
+  (xlib:create-gcontext :drawable window
+			:foreground *foreground*
+			:background *background*
+			:cache-p t
+			:subwindow-mode :include-inferiors))
 
 (defun get-depth32 ()
   "Return the first available 32 bit visual for the *DEFAULT-SCREEN*."
   (cadr (assoc 32 (screen-depths *default-screen*))))
-(defparameter *visual32* (get-depth32))
-(defparameter *pixmap32* (xlib:create-pixmap :width 1 :height 1 :depth 32 :drawable *root-window*))
-(defparameter *colormap32* (create-colormap *visual32* *root-window*))
-(defparameter *gcontext32* (create-gcontext :drawable *pixmap32*
-					  :foreground *foreground*
-					  :background *background*
-					  :cache-p t
-					  :subwindow-mode :include-inferiors))
+(defparameter *visual32* nil   )
+(defparameter *pixmap32* nil) 
+(defparameter *colormap32* nil )
+(defparameter *gcontext32* nil)
+
 
 ;;this may not be the right thing, but for convenience of development
-(setf (display-after-function *display*) #'display-force-output)
+;(setf (display-after-function *display*) #'display-force-output)
 
 (defun get-window (&key (parent *default-parent*)
 		     (x *x*) (y *y*)
@@ -107,3 +127,7 @@
   (dolist (format (xlib:find-matching-picture-formats *display* :depth 32 :blue 8 :alpha 8))
     (when (equalp (picture-format-alpha-byte format) '(8 . 24))
       (return format))))
+
+
+
+

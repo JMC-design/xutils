@@ -40,8 +40,8 @@
   ;;this should be generic. make macro that takes args and only collects and returns those that are set
   ;;caller can then do with them what they will.
   (let* ((state (xlib:window-map-state window))
-	(name (xlib:wm-name window))
-	(protocols (xlib:wm-protocols window))
+	 (name (xlib:wm-name window))
+	 (protocols (xlib:wm-protocols window))
 	 (size-hints (xlib:wm-hints window))
 	 (wtype (xlib:get-property window :_net_wm_window_type :transform (lambda (int) (xlib:atom-name xwindows:*display* int))))
 	 (id (when size-hints (xlib:wm-hints-window-group size-hints))))

@@ -1,6 +1,9 @@
 (defpackage :xevents
   (:use :cl :xlib :xwindows)
   (:export #:*standard-view-events*
+	   #:*window-events*
+	   #:*key-events*
+	   #:*buttons*
 	   #:set-event-mask
 	   client
 	   client-display
@@ -50,6 +53,30 @@
 	 (xwindows:*root-window* (xlib:screen-root xwindows:*default-screen*)))
      ,@body))
 
+(defmacro with-new-handlers (client handlers &body body)
+  (let ((orig-client-vector (client-vector client)))
+    (unwind-protect
+	  `(progn
+	    (mapcar (lambda (handler) (push-handler ,client handler)),handlers)
+	    ,@body)
+      (;mapcar (lambda (handler) (pop-handler client (car handler))) handlers
+       ))))
+
+(defmacro with-client2 (client &rest body)
+  (let ((things-to-bind (find-in body '(*display* *default-screen* *root-window*) body)))
+    `(let* ,things-to-bind)))
+
+;(defmacro with-structs (struct accessors &body))
+
+(defun find-in-body (find-list body)
+  (loop :for line :in body :nconc
+     (loop :for symb :in line
+	:when (member symb find-list :test #'equal :key #'car)
+	:collect (cdr symb) :into result
+	:finally (return result))))
+
+;; (find-in-body ('((*display* . `(client-display ,client)) *root-window*) '((open-default-display *display*) (do-something with *root-window*))))
+
 ;;xlib::*event-key-vector* changes depending on extensions present.
 (defun populate-vector(client &optional (default-handler nil))
   "Takes alist of handlers from client and slots them into correct slot in event vector."
@@ -61,11 +88,27 @@
 	     (setf (aref event-vector pos) (if handler (cdr handler) default-handler))))
     (setf (client-vector client) event-vector)))
 
-(defun add-handler (client handler)
+(defun replace-handler (client handler)
   "Adds handler to a client and slots it in the client vector."
   (setf (aref (client-vector client) (position (car handler) xlib::*event-key-vector* ))(cdr handler))
   (rplacd (assoc (car handler) (client-handlers client)) (cdr handler)))
 
+(defun add-handler (client handler)
+  "Adds handler to a client and slots it in the client vector."
+  (setf (aref (client-vector client) (position (car handler) xlib::*event-key-vector* ))(cdr handler)))
+
+(defun push-handler (client handler)
+  "Adds handler to a client and slots it in the client vector."
+  (setf (aref (client-vector client) (position (car handler) xlib::*event-key-vector* ))(cdr handler))
+  (push (cdr handler) (cdr (assoc (car handler) (client-handlers client)))))
+
+(defun pop-handler (client event-key)
+  (let ((old (pop (cdr (assoc event-key (client-handlers client))))))
+    (setf (aref (client-vector client) (position (car old) xlib::*event-key-vector* ))(cdr (assoc event-key (client-handlers client))))))
+(defun update-handlers (client)
+  )
 ;;events are simply plists, easy to print or destructure.
 (defun print-event (&rest plist)
   (format nil "~{~a: ~a ~%~}~%" plist))
+
+
